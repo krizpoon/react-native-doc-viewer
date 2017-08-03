@@ -31,6 +31,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.support.v4.content.FileProvider;
 
 import android.content.ActivityNotFoundException;
@@ -49,6 +53,7 @@ public class RNReactNativeDocViewerModule extends ReactContextBaseJavaModule {
   public static final int ERROR_FILE_NOT_FOUND = 2;
   public static final int ERROR_UNKNOWN_ERROR = 1;
   private final ReactApplicationContext reactContext;
+  private String authority;
 
   public RNReactNativeDocViewerModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -59,17 +64,28 @@ public class RNReactNativeDocViewerModule extends ReactContextBaseJavaModule {
   public String getName() {
     return "RNReactNativeDocViewer";
   }
-    
+
+  private String getAuthority() throws PackageManager.NameNotFoundException {
+      if (this.authority == null) {
+          Context context = this.reactContext;
+          ApplicationInfo info = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+          Bundle bundle = info.metaData;
+          this.authority = bundle.getString("react-native-doc-viewer-content-provider-authority");
+      }
+      return this.authority;
+  }
+
   @ReactMethod
   public void openDoc(ReadableArray args, Callback callback) {
       final ReadableMap arg_object = args.getMap(0);
       try {
+        final String authority = getAuthority();
         if (arg_object.getString("url") != null && arg_object.getString("fileName") != null) {
             // parameter parsing
             final String url = arg_object.getString("url");
             final String fileName =arg_object.getString("fileName");
             // Begin the Download Task
-            new FileDownloaderAsyncTask(callback, url, fileName).execute();
+            new FileDownloaderAsyncTask(callback, url, fileName, authority).execute();
         }else{
             callback.invoke(false);
         }
@@ -197,13 +213,15 @@ public class RNReactNativeDocViewerModule extends ReactContextBaseJavaModule {
         private final Callback callback;
         private final String url;
         private final String fileName;
+        private final String authority;
        
         public FileDownloaderAsyncTask(Callback callback,
-                String url, String fileName) {
+                String url, String fileName, String authority) {
             super();
             this.callback = callback;
             this.url = url;
             this.fileName = fileName;
+            this.authority = authority;
         }
 
         @Override
@@ -230,9 +248,8 @@ public class RNReactNativeDocViewerModule extends ReactContextBaseJavaModule {
                 return;
             }
             try {
-                Uri contentUri = FileProvider.getUriForFile(context, "com.reactlibrary.provider", result);
-                System.out.println("ContentUri");
-                System.out.println(contentUri);
+                Uri contentUri = FileProviderClass.getUriForFile(context, authority, result);
+                System.out.println("Did download " + url + " to " + result.getAbsolutePath() + ": ContentUri = " + contentUri);
 
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setDataAndType(contentUri, mimeType);  

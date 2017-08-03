@@ -1,13 +1,29 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.reactlibrary">
- <application>
-      <provider
+<manifest package="com.reactlibrary"
+          xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!--
+        # You should declare a content provider element in your app's
+        # AndroidManifest.xml.
+        # Example:
+
+        <provider
             android:name="com.reactlibrary.FileProviderClass"
-            android:authorities="com.reactlibrary.provider"
+            android:authorities="<YOUR-CONTENT-PROVIDER-AUTHORITY>"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/filepaths" />
+                android:resource="@xml/filepaths"/>
         </provider>
+
+        # This library will query the authority through a meta-data element
+        # with key "react-native-doc-viewer-content-provider-authority" in your
+        # app's AndroidManifest.xml.
+        # Example:
+
+        <meta-data
+            android:name="react-native-doc-viewer-content-provider-authority"
+            android:value="<YOUR-CONTENT-PROVIDER-AUTHORITY>"/>
+        -->
     </application>
 </manifest>
